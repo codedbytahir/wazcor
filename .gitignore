@@ -1,0 +1,26 @@
+# Logs
+*.log
+nohup.out
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+out/
+build/
+
+# Env
+.env
+.env.local
+
+# Docker
+.docker/
+
+# OS
+.DS_Store

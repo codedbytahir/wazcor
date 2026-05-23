@@ -1,0 +1,22 @@
+[
+  {
+    "id": "alert-001",
+    "timestamp": "2026-05-23T10:00:00Z",
+    "rule_id": "5712",
+    "description": "sshd: SSH brute force attempt.",
+    "severity": 5,
+    "host": "linux-web-03",
+    "user": "deploy",
+    "src_ip": "185.199.10.44"
+  },
+  {
+    "id": "alert-002",
+    "timestamp": "2026-05-23T10:05:00Z",
+    "rule_id": "5715",
+    "description": "sshd: authentication success.",
+    "severity": 3,
+    "host": "linux-web-03",
+    "user": "deploy",
+    "src_ip": "185.199.10.44"
+  }
+]
