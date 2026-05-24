@@ -18,6 +18,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <Link href="/dashboard" className="hover:text-neon transition">Dashboard</Link>
             <Link href="/alerts" className="hover:text-neon transition">Alerts</Link>
             <Link href="/cases" className="hover:text-neon transition">Cases</Link>
+            <Link href="/settings" className="hover:text-neon transition">Settings</Link>
           </div>
         </div>
       </nav>

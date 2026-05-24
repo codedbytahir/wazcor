@@ -6,8 +6,9 @@ Safety: Read-only, returns seeded data for the vertical slice.
 import json
 from typing import List
 from ..schemas.models import Evidence
+from .base import EvidenceCollector
 
-class MockElasticEvidenceCollector:
+class MockElasticEvidenceCollector(EvidenceCollector):
     def __init__(self, seed_file: str = "../data/seed_evidence.json"):
         self.seed_file = seed_file
         try:

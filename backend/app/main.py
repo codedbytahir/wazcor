@@ -32,7 +32,13 @@ app.add_middleware(
 )
 
 # Initialize components
-elastic = MockElasticEvidenceCollector()
+def get_evidence_collector():
+    if os.getenv("EVIDENCE_SOURCE", "mock").lower() == "elastic":
+        from .integrations.elastic_collector import ElasticEvidenceCollector
+        return ElasticEvidenceCollector()
+    return MockElasticEvidenceCollector()
+
+elastic = get_evidence_collector()
 memory = MongoCaseMemory()
 scorer = ScoringEngine()
 reporter = MarkdownReportGenerator()
@@ -42,10 +48,11 @@ def get_ai_provider():
     if provider_type == "gemini":
         return GeminiProvider(api_key=os.getenv("GEMINI_API_KEY", ""))
     elif provider_type == "openai":
-        return OpenAICompatibleProvider(base_url=os.getenv("OPENAI_BASE_URL", ""))
+        return OpenAICompatibleProvider(
+            base_url=os.getenv("OPENAI_BASE_URL", ""),
+            api_key=os.getenv("OPENAI_API_KEY", "EMPTY")
+        )
     return MockProvider()
-
-ai_provider = get_ai_provider()
 
 @app.get("/health")
 async def health():
@@ -70,11 +77,22 @@ async def get_alerts():
 @app.post("/investigations", response_model=Case)
 async def create_investigation(alert_id: str = Body(..., embed=True)):
     # 1. Load alert
-    alerts = await get_alerts()
+    try:
+        alerts = await get_alerts()
+    except Exception as e:
+        logger.error(f"Failed to load alerts: {e}")
+        raise HTTPException(status_code=500, detail="Failed to load alert queue")
+
     alert_data = next((a for a in alerts if a["id"] == alert_id), None)
     if not alert_data:
-        raise HTTPException(status_code=404, detail="Alert not found")
-    alert = Alert(**alert_data)
+        logger.warning(f"Alert ID {alert_id} not found in queue")
+        raise HTTPException(status_code=404, detail=f"Alert {alert_id} not found")
+
+    try:
+        alert = Alert(**alert_data)
+    except Exception as e:
+        logger.error(f"Alert schema validation error: {e}")
+        raise HTTPException(status_code=422, detail="Invalid alert data format")
 
     # 2. Collect evidence
     evidence = elastic.get_evidence_for_alert(alert_id)
@@ -90,6 +108,7 @@ async def create_investigation(alert_id: str = Body(..., embed=True)):
     ]
 
     # 4. Generate verdict
+    ai_provider = get_ai_provider()
     verdict = ai_provider.generate_verdict(alert, evidence)
 
     # 5. Create Case
