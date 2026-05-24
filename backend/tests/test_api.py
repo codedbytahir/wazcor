@@ -58,3 +58,18 @@ def test_investigation_flow():
     assert "report" in response.json()
     assert case_id in response.json()["report"]
     assert "Likely Host Compromise" in response.json()["report"]
+
+def test_investigation_invalid_alert():
+    response = client.post("/investigations", json={"alert_id": "non-existent"})
+    assert response.status_code == 404
+    assert "not found" in response.json()["detail"].lower()
+
+def test_get_case_not_found():
+    mock_memory.get_case.return_value = None
+    response = client.get("/cases/CASE-NOT-EXIST")
+    assert response.status_code == 404
+
+def test_get_report_not_found():
+    mock_memory.get_case.return_value = None
+    response = client.get("/cases/CASE-NOT-EXIST/report")
+    assert response.status_code == 404

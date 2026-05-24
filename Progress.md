@@ -55,17 +55,22 @@ Owner: Jules
 ## Latest Work Log
 
 ```text
-Date: 2026-05-24
-Agent: Gemini CLI QA
+Date: 2026-05-25
+Agent: Jules
 Changed: 
-- Fixed backend dependency issue (pinned pymongo==4.6.3 for motor compatibility).
-- Optimized frontend Dockerfile to include necessary config files (tailwind, postcss, tsconfig) and src directory in the runner stage.
-- Fixed frontend Dockerfile to correctly point to next.config.ts.
+- Implemented `GeminiProvider` using the `google-generativeai` library.
+- Implemented `OpenAICompatibleProvider` using the `openai` library.
+- Refactored evidence collection to use an `EvidenceCollector` interface.
+- Added `ElasticEvidenceCollector` stub for future integration.
+- Wired AI providers and Evidence collectors into `main.py` with dynamic selection.
+- Improved backend error handling for investigations.
+- Expanded backend test suite and created `test.sh` for E2E verification.
+- Added a Settings page to the frontend dashboard.
+- Updated documentation and environment examples.
 Tests: 
-- Backend: End-to-end flow verified via curl (health, alerts, investigations, cases, reports).
-- Backend: pytest suite passed (3 tests).
-- MongoDB: Persistence verified via mongosh queries.
-- Frontend: Build and Lint verified (linting has minor 'any' type warnings).
+- Backend: `python3 -m pytest` (6 tests passed).
+- Backend: Manual E2E verification using `test.sh`.
+- Frontend: Build verified.
 Blocked: None.
-Next: Integrate real Gemini API for verdict generation.
+Next: 1 of next step is enhancing the UI of the Wazcor
 ```
