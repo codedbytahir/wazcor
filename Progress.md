@@ -55,10 +55,17 @@ Owner: Jules
 ## Latest Work Log
 
 ```text
-Date: 2026-05-23
-Agent: Jules
-Changed: Refined vertical slice: dynamic AI provider selection, safety logic for evidence review, .gitignore implementation, and artifact cleanup.
-Tests: Backend API tests (pytest) pass; Frontend build (next build) success.
+Date: 2026-05-24
+Agent: Gemini CLI QA
+Changed: 
+- Fixed backend dependency issue (pinned pymongo==4.6.3 for motor compatibility).
+- Optimized frontend Dockerfile to include necessary config files (tailwind, postcss, tsconfig) and src directory in the runner stage.
+- Fixed frontend Dockerfile to correctly point to next.config.ts.
+Tests: 
+- Backend: End-to-end flow verified via curl (health, alerts, investigations, cases, reports).
+- Backend: pytest suite passed (3 tests).
+- MongoDB: Persistence verified via mongosh queries.
+- Frontend: Build and Lint verified (linting has minor 'any' type warnings).
 Blocked: None.
-Next: Real API integrations (Gemini, Elastic).
+Next: Integrate real Gemini API for verdict generation.
 ```
