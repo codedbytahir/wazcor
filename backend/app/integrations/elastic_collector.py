@@ -16,17 +16,36 @@ logger = logging.getLogger(__name__)
 
 class ElasticEvidenceCollector(EvidenceCollector):
     def __init__(self, url: str = None, api_key: str = None):
-        self.url = url or os.getenv("ELASTICSEARCH_URL")
-        self.api_key = api_key or os.getenv("ELASTICSEARCH_API_KEY")
+        # Support both ELASTIC_URL and legacy ELASTICSEARCH_URL
+        self.url = url or os.getenv("ELASTIC_URL") or os.getenv("ELASTICSEARCH_URL")
+        # Support both ELASTIC_API_KEY and legacy ELASTICSEARCH_API_KEY
+        self.api_key = api_key or os.getenv("ELASTIC_API_KEY") or os.getenv("ELASTICSEARCH_API_KEY")
+        # Support username/password as fallback
+        self.username = os.getenv("ELASTIC_USERNAME")
+        self.password = os.getenv("ELASTIC_PASSWORD")
+
         self.index = os.getenv("ELASTIC_ALERT_INDEX", "wazuh-alerts-*")
 
         if self.url:
             try:
-                self.client = Elasticsearch(
-                    self.url,
-                    api_key=self.api_key,
-                    request_timeout=5
-                )
+                if self.api_key:
+                    self.client = Elasticsearch(
+                        self.url,
+                        api_key=self.api_key,
+                        request_timeout=5
+                    )
+                elif self.username and self.password:
+                    self.client = Elasticsearch(
+                        self.url,
+                        basic_auth=(self.username, self.password),
+                        request_timeout=5
+                    )
+                else:
+                    self.client = Elasticsearch(
+                        self.url,
+                        request_timeout=5
+                    )
+
                 # Test connection
                 if not self.client.ping():
                     logger.warning("Elasticsearch ping failed. Evidence collection might fail.")

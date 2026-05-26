@@ -21,4 +21,5 @@ def get_ai_provider():
             model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
         )
 
+    # Explicitly return MockProvider if selected or as fallback
     return MockProvider()
