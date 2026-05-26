@@ -1,6 +1,37 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-background: #050807;
+  --color-metal: #101716;
+  --color-panel: #121c1a;
+  --color-panel-soft: #182320;
+  --color-neon: #39ff14;
+  --color-neon-soft: #9cff8a;
+  --color-cyan: #33f6ff;
+  --color-text: #eef8f0;
+  --color-muted: #8fa69a;
+  --color-danger: #ff4d6d;
+  --color-warning: #ffd166;
+
+  --shadow-neon-glow: 0 0 10px rgba(57, 255, 20, 0.4);
+  --shadow-neon-glow-strong: 0 0 20px rgba(57, 255, 20, 0.6);
+  --shadow-cyan-glow: 0 0 10px rgba(51, 246, 255, 0.4);
+  --shadow-danger-glow: 0 0 10px rgba(255, 77, 109, 0.4);
+  --shadow-warning-glow: 0 0 10px rgba(255, 209, 102, 0.4);
+
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-flicker: flicker 0.15s infinite;
+  --animate-scanline-bg: scanline-bg 8s linear infinite;
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+  @keyframes scanline-bg {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(100vh); }
+  }
+}
 
 :root {
   --background: #050807;
@@ -10,12 +41,66 @@
 body {
   color: var(--foreground);
   background: var(--background);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  overflow-x: hidden;
 }
 
-.neon-glow {
-  box-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+/* Cyber Utilities */
+@layer components {
+  .cyber-border {
+    @apply border border-panel-soft relative overflow-hidden;
+  }
+
+  .cyber-border::before {
+    content: '';
+    @apply absolute top-0 left-0 w-1 h-1 bg-neon;
+  }
+
+  .cyber-border::after {
+    content: '';
+    @apply absolute bottom-0 right-0 w-1 h-1 bg-neon;
+  }
+
+  .neon-text-glow {
+    text-shadow: 0 0 5px rgba(57, 255, 20, 0.7);
+  }
+
+  .glass-panel {
+    @apply bg-panel/80 backdrop-blur-md border border-white/5;
+  }
 }
 
-.neon-border {
-  border: 1px solid #39ff14;
+.scanline {
+  width: 100%;
+  height: 2px;
+  background: rgba(57, 255, 20, 0.1);
+  opacity: 0.1;
+  position: absolute;
+  bottom: 100%;
+  animation: scanline 10s linear infinite;
+  pointer-events: none;
+  z-index: 50;
+}
+
+@keyframes scanline {
+  0% { bottom: 100%; }
+  100% { bottom: 0%; }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #182320;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #39ff14;
 }

@@ -7,7 +7,7 @@
 ## Current Status
 
 ```text
-Stage: First vertical slice refined and verified
+Stage: Frontend Redesign / Premium Polish Complete
 Date: 2026-05-23
 Owner: Jules
 ```
@@ -27,6 +27,13 @@ Owner: Jules
 - **Verification:** Backend tests passing with mocked DB/AI. Frontend build success.
 - **Safety:** Implemented `needs_review` logic for missing/invalid evidence.
 - **Repo Health:** Added `.gitignore` and cleaned up binary/log artifacts.
+- **Frontend Polish:**
+  - Implemented Sidebar + TopBar layout shell.
+  - Redesigned Dashboard with metrics and live feed.
+  - Redesigned Alerts Queue with severity badges and triage info.
+  - Redesigned Case Detail with verdict hero, timeline, and artifact explorer.
+  - Implemented System Diagnostics page for health monitoring.
+  - Integrated `lucide-react` icons and Tailwind v4 theme tokens.
 
 ## Next Build Steps
 
@@ -39,7 +46,6 @@ Owner: Jules
 
 ## Open Questions
 
-- Which exact Gemini model will be used for the hackathon demo?
 - Should we add a WebSocket for real-time alert updates in the UI?
 
 ## Decision Log
@@ -51,26 +57,24 @@ Owner: Jules
 | 2026-05-23 | Use MongoDB for SOC memory | Best fit for cases, feedback, profiles, IOC memory. |
 | 2026-05-23 | Add local AI support | Real companies may require private/on-prem inference. |
 | 2026-05-23 | Backend orchestrates tools deterministically | Safer and more reliable than local model tool-calling. |
+| 2026-05-23 | Use Sidebar + TopBar Shell | Industry standard for SOC workstation layouts. |
 
 ## Latest Work Log
 
 ```text
-Date: 2026-05-25
-Agent: Jules
+Date: 2026-05-23
+Agent: Jules Frontend Polish
 Changed: 
-- Implemented `GeminiProvider` using the `google-generativeai` library.
-- Implemented `OpenAICompatibleProvider` using the `openai` library.
-- Refactored evidence collection to use an `EvidenceCollector` interface.
-- Added `ElasticEvidenceCollector` stub for future integration.
-- Wired AI providers and Evidence collectors into `main.py` with dynamic selection.
-- Improved backend error handling for investigations.
-- Expanded backend test suite and created `test.sh` for E2E verification.
-- Added a Settings page to the frontend dashboard.
-- Updated documentation and environment examples.
+- Complete redesign of the frontend UI/UX.
+- Added Sidebar navigation and Top status bar.
+- Implemented high-contrast "cyber" theme with neon green accents.
+- Improved all core pages: Dashboard, Alerts, Cases, Case Detail, and Settings.
+- Integrated `lucide-react` for SOC iconography.
+- Configured Tailwind v4 theme variables in `globals.css`.
 Tests: 
-- Backend: `python3 -m pytest` (6 tests passed).
-- Backend: Manual E2E verification using `test.sh`.
-- Frontend: Build verified.
+- Frontend build: `npm run build` (Success).
+- Flow Verification: Alerts -> Investigate -> Case Detail (Verified with Playwright).
+- Visual Inspection: 4 screenshots captured and verified.
 Blocked: None.
-Next: 1 of next step is enhancing the UI of the Wazcor
+Next: Backend integration with real Gemini/Elastic.
 ```
