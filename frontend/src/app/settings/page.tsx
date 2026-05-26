@@ -16,9 +16,10 @@ import {
 } from "lucide-react";
 
 interface BackendStatus {
-  database: { connected: boolean; type: string };
-  ai_provider: { selected: string; configured: boolean };
-  evidence_provider: { selected: string; configured: boolean };
+  app: { version: string; mode: string };
+  database: { connected: boolean; type: string; warning?: string };
+  ai_provider: { selected: string; configured: boolean; warning?: string };
+  evidence_provider: { selected: string; configured: boolean; warning?: string };
 }
 
 export default function SettingsPage() {
@@ -37,11 +38,17 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-      <header>
-        <h1 className="text-4xl font-black text-white tracking-tight mb-2 uppercase">
-          SYSTEM <span className="text-neon neon-text-glow">DIAGNOSTICS</span>
-        </h1>
-        <p className="text-muted font-mono text-sm tracking-widest uppercase">Environment configuration & health metrics</p>
+      <header className="flex justify-between items-end">
+        <div>
+          <h1 className="text-4xl font-black text-white tracking-tight mb-2 uppercase">
+            SYSTEM <span className="text-neon neon-text-glow">DIAGNOSTICS</span>
+          </h1>
+          <p className="text-muted font-mono text-sm tracking-widest uppercase">Environment configuration & health metrics</p>
+        </div>
+        <div className="text-right font-mono text-[10px] text-muted space-y-1">
+          <div>VERSION: {status?.app?.version || "..."}</div>
+          <div>MODE: {status?.app?.mode?.toUpperCase() || "..."}</div>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -62,6 +69,11 @@ export default function SettingsPage() {
               <StatRow label="Model" value={status?.ai_provider?.selected === 'mock' ? 'deterministic-rule-v1' : 'dynamic-llm'} />
               <StatRow label="Region" value="global-edge" />
             </div>
+            {status?.ai_provider?.warning && (
+              <div className="mt-4 p-2 bg-danger/10 border border-danger/20 rounded text-[9px] text-danger font-mono">
+                {status.ai_provider.warning}
+              </div>
+            )}
           </div>
         </div>
 
@@ -82,6 +94,11 @@ export default function SettingsPage() {
               <StatRow label="Type" value={status?.evidence_provider?.selected === 'mock' ? 'Static Seed' : 'Wazuh/Elastic'} />
               <StatRow label="Sync" value="Real-time" />
             </div>
+            {status?.evidence_provider?.warning && (
+              <div className="mt-4 p-2 bg-danger/10 border border-danger/20 rounded text-[9px] text-danger font-mono">
+                {status.evidence_provider.warning}
+              </div>
+            )}
           </div>
         </div>
 
@@ -99,9 +116,14 @@ export default function SettingsPage() {
             <div className="space-y-3">
               <StatRow label="Engine" value={status?.database?.type?.toUpperCase() || "..."} />
               <StatRow label="Status" value={status?.database?.connected ? "CONNECTED" : "DISCONNECTED"} color={status?.database?.connected ? "text-neon" : "text-danger"} />
-              <StatRow label="Endpoint" value={process.env.DATABASE_URL ? "PROTECTED" : "LOCAL"} />
+              <StatRow label="Endpoint" value="[PROTECTED]" />
               <StatRow label="Uptime" value="99.99%" />
             </div>
+            {status?.database?.warning && (
+              <div className="mt-4 p-2 bg-warning/10 border border-warning/20 rounded text-[9px] text-warning font-mono">
+                {status.database.warning}
+              </div>
+            )}
           </div>
         </div>
       </div>

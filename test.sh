@@ -5,6 +5,12 @@
 
 set -e
 
+if ! command -v jq &> /dev/null
+then
+    echo "Error: jq is not installed. Please install jq to run this script."
+    exit 1
+fi
+
 BACKEND_URL=${1:-"http://localhost:8000"}
 
 echo "--- WAZCOR E2E VERIFICATION ---"
@@ -18,12 +24,12 @@ echo "$ALERTS" | grep -q "SSH brute force" && echo "  OK" || (echo "  FAILED" &&
 
 echo "[3/5] Starting Investigation..."
 CASE_JSON=$(curl -s -X POST "$BACKEND_URL/investigations" -H "Content-Type: application/json" -d '{"alert_id": "alert-001"}')
-CASE_ID=$(echo "$CASE_JSON" | grep -o '"id":"[^"]*' | cut -d'"' -f4)
+CASE_ID=$(echo "$CASE_JSON" | jq -r '.id')
 
-if [ -n "$CASE_ID" ]; then
+if [ -n "$CASE_ID" ] && [ "$CASE_ID" != "null" ]; then
     echo "  OK (Case ID: $CASE_ID)"
 else
-    echo "  FAILED"
+    echo "  FAILED (Full response: $CASE_JSON)"
     exit 1
 fi
 

@@ -1,48 +1,27 @@
 # Wazuh Bridge Lite
 
-Wazuh Bridge Lite is a lightweight, read-only connector designed to reside near the Wazuh Manager. Its purpose is to ingest alerts from Wazuh and forward them to the WAZCOR API for investigation.
+Wazuh Bridge Lite is a proposed lightweight, read-only connector for WAZCOR.
 
-## Architecture
+## Design Goals
 
-```text
-Wazuh Manager (alerts.json) -> Wazuh Bridge Lite -> WAZCOR API (POST /ingest/alerts)
-```
+- **Lightweight**: Minimal CPU/Memory footprint on the Wazuh Manager.
+- **Read-Only**: No capability to modify Wazuh configuration or perform destructive actions.
+- **Secure**: Outbound HTTPS only, least-privilege access.
+- **Reliable**: Small local retry queue for network disruptions.
 
-## Core Principles
+## Operation
 
-1.  **Read-Only**: The bridge only reads `alerts.json`. It does not modify Wazuh configuration or agent state.
-2.  **Outbound-Only**: The bridge initiates connections to the WAZCOR API. It does not expose any listening ports (except optionally for local metrics).
-3.  **Lightweight**: Minimal CPU/Memory footprint. Written in Go or Python.
-4.  **Secure**: Uses API keys for authentication with WAZCOR. Redacts sensitive data if configured.
+1. **Monitor**: Reads `/var/ossec/logs/alerts/alerts.json` in real-time.
+2. **Batch**: Batches alerts before sending to reduce overhead.
+3. **Ingest**: Calls the WAZCOR `POST /ingest/alerts` endpoint.
 
-## Proposed Interface
+## Security Constraints
 
-The bridge should support the following configuration:
+- No shell execution capabilities.
+- No endpoint scanning or isolation features.
+- No direct database access.
+- Only authorized to talk to the configured WAZCOR API URL.
 
-- `WAZUH_ALERTS_PATH`: Path to Wazuh `alerts.json` (default: `/var/ossec/logs/alerts/alerts.json`).
-- `WAZCOR_API_URL`: URL of the WAZCOR backend.
-- `WAZCOR_API_KEY`: Authentication key for the WAZCOR API.
-- `BATCH_SIZE`: Number of alerts to batch before sending (default: 10).
-- `FLUSH_INTERVAL`: Maximum time to wait before sending a partial batch (default: 5s).
+## Future Implementation (Go)
 
-## Future Implementation Details (Go)
-
-```go
-// Example Tailer structure
-type Bridge struct {
-    TargetURL string
-    APIKey    string
-    FilePath  string
-}
-
-func (b *Bridge) Start() {
-    // 1. Open alerts.json
-    // 2. Tail the file
-    // 3. Parse JSON lines
-    // 4. Batch and Send to WAZCOR
-}
-```
-
-## Deployment
-
-Typically deployed as a systemd service or a sidecar container alongside the Wazuh Manager.
+The bridge will be implemented in Go for maximum performance and portability across Linux distributions where Wazuh Managers typically run.
