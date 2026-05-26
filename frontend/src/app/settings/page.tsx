@@ -6,9 +6,6 @@ Safety: Informational page, no sensitive secrets shown.
 */
 import { useState, useEffect } from "react";
 import {
-  Settings,
-  Activity,
-  Cpu,
   Database,
   Network,
   ShieldCheck,
@@ -18,20 +15,23 @@ import {
   AlertCircle
 } from "lucide-react";
 
+interface BackendStatus {
+  database: { connected: boolean; type: string };
+  ai_provider: { selected: string; configured: boolean };
+  evidence_provider: { selected: string; configured: boolean };
+}
+
 export default function SettingsPage() {
-  const [status, setStatus] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<BackendStatus | null>(null);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/health`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/status`)
       .then(res => res.json())
       .then(data => {
         setStatus(data);
-        setLoading(false);
       })
       .catch(err => {
         console.error("Failed to fetch status", err);
-        setLoading(false);
       });
   }, []);
 
@@ -45,62 +45,62 @@ export default function SettingsPage() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* API Health */}
-        <div className="bg-panel border border-panel-soft p-6 rounded-lg cyber-border space-y-6">
-          <div className="flex justify-between items-start">
-            <div className="p-2 bg-neon/10 rounded border border-neon/20 shadow-neon-glow">
-              <Activity className="text-neon w-5 h-5" />
-            </div>
-            <StatusDot active={status?.status === 'healthy'} />
-          </div>
-
-          <div>
-            <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-4">Core API Status</h3>
-            <div className="space-y-3">
-              <StatRow label="Service" value="wazcor-api" />
-              <StatRow label="Endpoint" value={process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"} />
-              <StatRow label="Latency" value="12ms" />
-              <StatRow label="Uptime" value="99.98%" />
-            </div>
-          </div>
-        </div>
-
         {/* AI Provider */}
         <div className="bg-panel border border-panel-soft p-6 rounded-lg cyber-border space-y-6">
           <div className="flex justify-between items-start">
-            <div className="p-2 bg-cyan/10 rounded border border-cyan/20">
+            <div className="p-2 bg-cyan/10 rounded border border-cyan/20 shadow-cyan-glow">
               <Zap className="text-cyan w-5 h-5" />
             </div>
-            <StatusDot active={true} />
+            <StatusDot active={!!status?.ai_provider?.configured} />
           </div>
 
           <div>
             <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-4">Inference Gateway</h3>
             <div className="space-y-3">
-              <StatRow label="Provider" value="MOCK (Simulated)" color="text-cyan" />
-              <StatRow label="Model" value="wazcor-reasoner-v1" />
-              <StatRow label="Rate Limit" value="10k / min" />
+              <StatRow label="Selected" value={status?.ai_provider?.selected?.toUpperCase() || "..."} color="text-cyan" />
+              <StatRow label="Status" value={status?.ai_provider?.configured ? "CONFIGURED" : "MISSING KEY"} color={status?.ai_provider?.configured ? "text-neon" : "text-danger"} />
+              <StatRow label="Model" value={status?.ai_provider?.selected === 'mock' ? 'deterministic-rule-v1' : 'dynamic-llm'} />
               <StatRow label="Region" value="global-edge" />
             </div>
           </div>
         </div>
 
-        {/* Integration Sources */}
+        {/* Evidence Provider */}
         <div className="bg-panel border border-panel-soft p-6 rounded-lg cyber-border space-y-6">
           <div className="flex justify-between items-start">
-            <div className="p-2 bg-warning/10 rounded border border-warning/20">
-              <Database className="text-warning w-5 h-5" />
+            <div className="p-2 bg-warning/10 rounded border border-warning/20 shadow-warning-glow">
+              <Network className="text-warning w-5 h-5" />
             </div>
-            <StatusDot active={true} />
+            <StatusDot active={!!status?.evidence_provider?.configured} />
           </div>
 
           <div>
-            <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-4">Data Connectors</h3>
+            <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-4">Evidence Collector</h3>
             <div className="space-y-3">
-              <StatRow label="Evidence" value="Wazuh Indexer" />
-              <StatRow label="Memory" value="MongoDB Cluster" />
-              <StatRow label="Mode" value="Live Ingest" color="text-warning" />
+              <StatRow label="Source" value={status?.evidence_provider?.selected?.toUpperCase() || "..."} color="text-warning" />
+              <StatRow label="Status" value={status?.evidence_provider?.configured ? "ACTIVE" : "UNAVAILABLE"} color={status?.evidence_provider?.configured ? "text-neon" : "text-danger"} />
+              <StatRow label="Type" value={status?.evidence_provider?.selected === 'mock' ? 'Static Seed' : 'Wazuh/Elastic'} />
               <StatRow label="Sync" value="Real-time" />
+            </div>
+          </div>
+        </div>
+
+        {/* Database Status */}
+        <div className="bg-panel border border-panel-soft p-6 rounded-lg cyber-border space-y-6">
+          <div className="flex justify-between items-start">
+            <div className="p-2 bg-neon/10 rounded border border-neon/20 shadow-neon-glow">
+              <Database className="text-neon w-5 h-5" />
+            </div>
+            <StatusDot active={!!status?.database?.connected} />
+          </div>
+
+          <div>
+            <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-4">Case Memory</h3>
+            <div className="space-y-3">
+              <StatRow label="Engine" value={status?.database?.type?.toUpperCase() || "..."} />
+              <StatRow label="Status" value={status?.database?.connected ? "CONNECTED" : "DISCONNECTED"} color={status?.database?.connected ? "text-neon" : "text-danger"} />
+              <StatRow label="Endpoint" value={process.env.DATABASE_URL ? "PROTECTED" : "LOCAL"} />
+              <StatRow label="Uptime" value="99.99%" />
             </div>
           </div>
         </div>
@@ -123,11 +123,11 @@ export default function SettingsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-panel-soft font-mono text-[10px]">
-              <ConfigRow name="AI_PROVIDER" value="MOCK" system="Inference" />
-              <ConfigRow name="EVIDENCE_SOURCE" value="MOCK" system="Integrations" />
-              <ConfigRow name="MONGO_URI" value="mongodb://localhost:27017" system="Database" />
-              <ConfigRow name="GEMINI_API_KEY" value="[PROTECTED]" system="Auth" />
-              <ConfigRow name="NEXT_PUBLIC_API_URL" value="http://localhost:8000" system="Frontend" />
+              <ConfigRow name="AI_PROVIDER" value={status?.ai_provider?.selected || "MOCK"} system="Inference" verified={!!status?.ai_provider?.configured} />
+              <ConfigRow name="EVIDENCE_SOURCE" value={status?.evidence_provider?.selected || "MOCK"} system="Integrations" verified={!!status?.evidence_provider?.configured} />
+              <ConfigRow name="DATABASE_URL" value="[PROTECTED]" system="Database" verified={!!status?.database?.connected} />
+              <ConfigRow name="GEMINI_API_KEY" value="[PROTECTED]" system="Auth" verified={!!status?.ai_provider?.configured} />
+              <ConfigRow name="NEXT_PUBLIC_API_URL" value={process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"} system="Frontend" verified={!!status} />
             </tbody>
           </table>
         </div>
@@ -158,7 +158,7 @@ export default function SettingsPage() {
   );
 }
 
-function StatRow({ label, value, color = "text-white" }: any) {
+function StatRow({ label, value, color = "text-white" }: { label: string; value: string; color?: string }) {
   return (
     <div className="flex justify-between items-center border-b border-panel-soft pb-2 last:border-0 last:pb-0">
       <span className="text-[10px] text-muted font-bold uppercase">{label}</span>
@@ -167,7 +167,7 @@ function StatRow({ label, value, color = "text-white" }: any) {
   );
 }
 
-function ConfigRow({ name, value, system }: any) {
+function ConfigRow({ name, value, system, verified }: { name: string; value: string; system: string; verified: boolean }) {
   return (
     <tr className="hover:bg-panel-soft/30 transition-colors">
       <td className="px-6 py-4 text-white">{name}</td>
@@ -176,9 +176,9 @@ function ConfigRow({ name, value, system }: any) {
         <span className="px-2 py-0.5 bg-panel-soft rounded text-muted uppercase text-[9px] font-bold">{system}</span>
       </td>
       <td className="px-6 py-4 text-right">
-        <div className="flex items-center justify-end gap-1.5 text-neon">
-          <CheckCircle2 className="w-3.5 h-3.5" />
-          <span className="text-[9px] font-bold uppercase tracking-widest">Verified</span>
+        <div className={`flex items-center justify-end gap-1.5 ${verified ? 'text-neon' : 'text-danger'}`}>
+          {verified ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+          <span className="text-[9px] font-bold uppercase tracking-widest">{verified ? 'Verified' : 'Invalid'}</span>
         </div>
       </td>
     </tr>

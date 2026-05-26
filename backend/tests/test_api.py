@@ -25,6 +25,24 @@ def test_health():
     assert response.status_code == 200
     assert response.json()["status"] == "healthy"
 
+def test_status():
+    response = client.get("/status")
+    assert response.status_code == 200
+    data = response.json()
+    assert "database" in data
+    assert "ai_provider" in data
+    assert "evidence_provider" in data
+
+def test_ingest_alert():
+    alert = {"id": "test-alert", "rule": {"id": "1001"}, "timestamp": "2026-05-23T12:00:00Z"}
+    # Mock database raw_alerts insert
+    main.memory.db = MagicMock()
+    main.memory.db.raw_alerts.insert_one = AsyncMock(return_value=MagicMock())
+
+    response = client.post("/ingest/alerts", json=alert)
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+
 def test_get_alerts():
     response = client.get("/alerts")
     assert response.status_code == 200

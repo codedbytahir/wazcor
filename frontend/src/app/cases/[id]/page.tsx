@@ -9,6 +9,7 @@ import { fetchCase, submitFeedback, fetchReport } from "@/lib/api";
 import { useParams, useRouter } from "next/navigation";
 import {
   ShieldAlert,
+  AlertTriangle,
   ChevronLeft,
   Download,
   CheckCircle2,
@@ -102,6 +103,13 @@ export default function CaseDetailPage() {
         </div>
       </header>
 
+      {caseData.warning && (
+        <div className="bg-warning/10 border border-warning/30 p-4 rounded-lg flex items-center gap-3 animate-pulse">
+          <AlertTriangle className="text-warning w-5 h-5" />
+          <span className="text-xs text-warning font-bold uppercase tracking-widest">{caseData.warning}</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Verdict & Entities */}
         <div className="lg:col-span-1 space-y-6">
@@ -164,7 +172,7 @@ export default function CaseDetailPage() {
                     <span className="text-[10px] font-bold text-white uppercase tracking-tight">{h.name.replace(/_/g, ' ')}</span>
                     <StatusBadge status={h.status} />
                   </div>
-                  <p className="text-[10px] text-muted leading-relaxed font-mono italic">"{h.reason}"</p>
+                  <p className="text-[10px] text-muted leading-relaxed font-mono italic">&quot;{h.reason}&quot;</p>
                 </div>
               ))}
             </div>
