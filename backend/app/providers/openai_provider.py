@@ -14,9 +14,10 @@ from ..schemas.models import Evidence, Verdict, Alert, Hypothesis
 logger = logging.getLogger(__name__)
 
 class OpenAICompatibleProvider:
-    def __init__(self, base_url: str, api_key: str = "EMPTY"):
+    def __init__(self, base_url: str, api_key: str = "EMPTY", model: str = "gpt-3.5-turbo"):
         self.base_url = base_url
         self.api_key = api_key
+        self.model_name = model
         if base_url:
             self.client = OpenAI(base_url=base_url, api_key=api_key)
         else:
@@ -32,7 +33,7 @@ class OpenAICompatibleProvider:
 
         try:
             response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo", # Default model, usually ignored by Ollama/vLLM if only one model is loaded
+                model=self.model_name,
                 messages=[
                     {"role": "system", "content": "You are an expert SOC Analyst."},
                     {"role": "user", "content": prompt}

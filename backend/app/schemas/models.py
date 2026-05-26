@@ -60,3 +60,4 @@ class Case(BaseModel):
     evidence: List[Evidence]
     timeline: List[TimelineEvent]
     feedback: Optional[Feedback] = None
+    warning: Optional[str] = None

@@ -7,15 +7,13 @@ import os
 import json
 import logging
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 from fastapi import FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from .schemas.models import Alert, Case, Verdict, Feedback, TimelineEvent, Evidence
 from .integrations.mock_elastic import MockElasticEvidenceCollector
 from .integrations.mongo_memory import MongoCaseMemory
-from .providers.mock_provider import MockProvider
-from .providers.gemini_provider import GeminiProvider
-from .providers.openai_provider import OpenAICompatibleProvider
+from .providers.factory import get_ai_provider
 from .scoring.scoring import ScoringEngine
 from .reports.markdown import MarkdownReportGenerator
 
@@ -43,20 +41,80 @@ memory = MongoCaseMemory()
 scorer = ScoringEngine()
 reporter = MarkdownReportGenerator()
 
-def get_ai_provider():
-    provider_type = os.getenv("AI_PROVIDER", "mock").lower()
-    if provider_type == "gemini":
-        return GeminiProvider(api_key=os.getenv("GEMINI_API_KEY", ""))
-    elif provider_type == "openai":
-        return OpenAICompatibleProvider(
-            base_url=os.getenv("OPENAI_BASE_URL", ""),
-            api_key=os.getenv("OPENAI_API_KEY", "EMPTY")
-        )
-    return MockProvider()
-
 @app.get("/health")
 async def health():
     return {"status": "healthy", "timestamp": datetime.now()}
+
+@app.get("/status")
+async def status():
+    """
+    Returns the connectivity and configuration status of backend components.
+    """
+    # 1. Database status
+    db_connected = False
+    if memory.use_db:
+        try:
+            # Quick ping
+            await memory.client.admin.command('ping')
+            db_connected = True
+        except:
+            db_connected = False
+
+    # 2. AI Provider status
+    ai_provider_type = os.getenv("AI_PROVIDER", "mock").lower()
+    ai_configured = False
+    if ai_provider_type == "mock":
+        ai_configured = True
+    elif ai_provider_type == "gemini":
+        ai_configured = bool(os.getenv("GEMINI_API_KEY"))
+    elif ai_provider_type == "openai":
+        ai_configured = bool(os.getenv("OPENAI_BASE_URL"))
+
+    # 3. Evidence Provider status
+    ev_provider_type = os.getenv("EVIDENCE_SOURCE", "mock").lower()
+    ev_configured = False
+    if ev_provider_type == "mock":
+        ev_configured = True
+    elif ev_provider_type == "elastic":
+        ev_configured = bool(os.getenv("ELASTICSEARCH_URL"))
+        # Optional: attempt quick ping if configured
+        if ev_configured and hasattr(elastic, 'client') and elastic.client:
+            try:
+                # Elastic client is synchronous, do not await
+                ev_configured = bool(elastic.client.ping())
+            except:
+                ev_configured = False
+
+    return {
+        "database": {
+            "connected": db_connected,
+            "type": "mongodb" if memory.use_db else "in-memory"
+        },
+        "ai_provider": {
+            "selected": ai_provider_type,
+            "configured": ai_configured
+        },
+        "evidence_provider": {
+            "selected": ev_provider_type,
+            "configured": ev_configured
+        },
+        "timestamp": datetime.now()
+    }
+
+@app.post("/ingest/alerts")
+async def ingest_alert(alert: Dict = Body(...)):
+    """
+    Ingest a raw Wazuh alert and store it in MongoDB.
+    """
+    try:
+        await memory.db.raw_alerts.insert_one({
+            "received_at": datetime.now(),
+            "alert": alert
+        })
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Failed to ingest alert: {e}")
+        raise HTTPException(status_code=500, detail="Failed to store alert")
 
 @app.get("/alerts", response_model=List[Alert])
 async def get_alerts():
@@ -109,16 +167,35 @@ async def create_investigation(alert_id: str = Body(..., embed=True)):
 
     # 4. Generate verdict
     ai_provider = get_ai_provider()
-    verdict = ai_provider.generate_verdict(alert, evidence)
+    try:
+        verdict = ai_provider.generate_verdict(alert, evidence)
+        # Centralized schema validation
+        if not isinstance(verdict, Verdict):
+            logger.error(f"Provider returned invalid type: {type(verdict)}")
+            raise ValueError("Invalid verdict format from provider")
+    except Exception as e:
+        logger.error(f"AI Provider failed: {e}")
+        # Fail-safe: Create a 'needs_review' verdict manually
+        from .providers.mock_provider import MockProvider
+        verdict = MockProvider()._needs_review_verdict(
+            case_id=f"CASE-ERR-{datetime.now().strftime('%H%M%S')}",
+            alert=alert,
+            reason=f"AI Provider Error: {str(e)}"
+        )
 
     # 5. Create Case
+    warning = None
+    if verdict.verdict == "needs_review":
+        warning = "Investigation results are inconclusive or provider failed. Manual review required."
+
     case = Case(
         id=verdict.case_id,
         alert_id=alert_id,
         created_at=datetime.now(),
         verdict=verdict,
         evidence=evidence,
-        timeline=timeline
+        timeline=timeline,
+        warning=warning
     )
 
     # 6. Store in MongoDB
